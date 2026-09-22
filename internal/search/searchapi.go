@@ -155,11 +155,12 @@ func (s *SearchAPIProvider) doImageSearch(ctx context.Context, params ImageSearc
 	for _, r := range resp.Images {
 		results = append(results, ImageResult{
 			Title:         r.Title,
-			Link:          r.Original,
+			Link:          r.Original.Link,
 			ThumbnailLink: r.Thumbnail,
-			DisplayLink:   r.Source,
-			Width:         r.OriginalWidth,
-			Height:        r.OriginalHeight,
+			ContextLink:   r.Source.Link,
+			DisplayLink:   r.Source.Name,
+			Width:         r.Original.Width,
+			Height:        r.Original.Height,
 		})
 	}
 	return results, nil
@@ -188,8 +189,8 @@ func (s *SearchAPIProvider) doNewsSearch(ctx context.Context, params NewsSearchP
 		return nil, fmt.Errorf("searchapi: failed to parse news response: %w", err)
 	}
 
-	results := make([]NewsResult, 0, len(resp.NewsResults))
-	for _, r := range resp.NewsResults {
+	results := make([]NewsResult, 0, len(resp.OrganicResults))
+	for _, r := range resp.OrganicResults {
 		results = append(results, NewsResult{
 			Title:       r.Title,
 			URL:         r.Link,
@@ -443,20 +444,25 @@ type searchAPIOrganicResult struct {
 }
 
 type searchAPIImageResponse struct {
-	Images []searchAPIImageResult `json:"images_results"`
+	Images []searchAPIImageResult `json:"images"`
 }
 
 type searchAPIImageResult struct {
-	Title          string `json:"title"`
-	Original       string `json:"original"`
-	Thumbnail      string `json:"thumbnail"`
-	Source         string `json:"source"`
-	OriginalWidth  int    `json:"original_width"`
-	OriginalHeight int    `json:"original_height"`
+	Title    string `json:"title"`
+	Original struct {
+		Link   string `json:"link"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+	} `json:"original"`
+	Thumbnail string `json:"thumbnail"`
+	Source    struct {
+		Name string `json:"name"`
+		Link string `json:"link"`
+	} `json:"source"`
 }
 
 type searchAPINewsResponse struct {
-	NewsResults []searchAPINewsResult `json:"news_results"`
+	OrganicResults []searchAPINewsResult `json:"organic_results"`
 }
 
 type searchAPINewsResult struct {
