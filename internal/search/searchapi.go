@@ -67,7 +67,6 @@ func (s *SearchAPIProvider) doWebSearch(ctx context.Context, params WebSearchPar
 	q := url.Values{}
 	q.Set("engine", "google")
 	q.Set("q", buildQuery(params))
-	q.Set("num", strconv.Itoa(clamp(params.NumResults, 1, 10)))
 
 	if params.Country != "" {
 		q.Set("gl", params.Country)
@@ -92,6 +91,10 @@ func (s *SearchAPIProvider) doWebSearch(ctx context.Context, params WebSearchPar
 		return nil, fmt.Errorf("searchapi: failed to parse response: %w", err)
 	}
 
+	// Google's num is fixed at 10; limit the returned results locally.
+	if limit := max(params.NumResults, 1); limit < len(resp.OrganicResults) {
+		resp.OrganicResults = resp.OrganicResults[:limit]
+	}
 	results := make([]SearchResult, 0, len(resp.OrganicResults))
 	for _, r := range resp.OrganicResults {
 		results = append(results, SearchResult{
@@ -108,7 +111,6 @@ func (s *SearchAPIProvider) doImageSearch(ctx context.Context, params ImageSearc
 	q := url.Values{}
 	q.Set("engine", "google_images")
 	q.Set("q", params.Query)
-	q.Set("num", strconv.Itoa(clamp(params.NumResults, 1, 10)))
 
 	if params.Safe != "" && params.Safe != "off" {
 		q.Set("safe", "active")
@@ -151,6 +153,10 @@ func (s *SearchAPIProvider) doImageSearch(ctx context.Context, params ImageSearc
 		return nil, fmt.Errorf("searchapi: failed to parse image response: %w", err)
 	}
 
+	// Google Images does not document num; enforce the requested limit locally.
+	if limit := max(params.NumResults, 1); limit < len(resp.Images) {
+		resp.Images = resp.Images[:limit]
+	}
 	results := make([]ImageResult, 0, len(resp.Images))
 	for _, r := range resp.Images {
 		results = append(results, ImageResult{
@@ -170,7 +176,6 @@ func (s *SearchAPIProvider) doNewsSearch(ctx context.Context, params NewsSearchP
 	q := url.Values{}
 	q.Set("engine", "google_news")
 	q.Set("q", params.Query)
-	q.Set("num", strconv.Itoa(clamp(params.NumResults, 1, 10)))
 
 	if params.Freshness != "" {
 		q.Set("time_period", mapSearchAPITimePeriod(params.Freshness))
@@ -189,6 +194,10 @@ func (s *SearchAPIProvider) doNewsSearch(ctx context.Context, params NewsSearchP
 		return nil, fmt.Errorf("searchapi: failed to parse news response: %w", err)
 	}
 
+	// This engine does not document num; limit the returned results locally.
+	if limit := max(params.NumResults, 1); limit < len(resp.OrganicResults) {
+		resp.OrganicResults = resp.OrganicResults[:limit]
+	}
 	results := make([]NewsResult, 0, len(resp.OrganicResults))
 	for _, r := range resp.OrganicResults {
 		results = append(results, NewsResult{

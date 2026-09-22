@@ -1321,8 +1321,8 @@ func TestSearchAPIProvider_WebSearch(t *testing.T) {
 		if !strings.Contains(q.Get("q"), "test query") {
 			t.Errorf("expected query to contain 'test query', got %q", q.Get("q"))
 		}
-		if q.Get("num") != "5" {
-			t.Errorf("expected num '5', got %q", q.Get("num"))
+		if q.Has("num") {
+			t.Error("unexpected num parameter for google")
 		}
 
 		// Keep the JSON independent of the response structs to catch schema drift.
